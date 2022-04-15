@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block content %}
+        <style>
+                        #video {
+            border: 1px solid black;
+            box-shadow: 2px 2px 3px black;
+            width:320px;
+            height:240px;
+            }
+
+            #photo {
+            border: 1px solid black;
+            box-shadow: 2px 2px 3px black;
+            width:320px;
+            height:240px;
+            }
+
+            #canvas {
+            display:none;
+            }
+
+            .camera {
+            width: 340px;
+            display:inline-block;
+            }
+
+            .output {
+            width: 340px;
+            display:inline-block;
+            vertical-align: top;
+            }
+
+            #startbutton {
+            display:block;
+            position:relative;
+            margin-left:auto;
+            margin-right:auto;
+            bottom:32px;
+            background-color: rgba(0, 150, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0px 0px 1px 2px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+            font-family: "Lucida Grande", "Arial", sans-serif;
+            color: rgba(255, 255, 255, 1.0);
+            }
+
+            .contentarea {
+            font-size: 16px;
+            font-family: "Lucida Grande", "Arial", sans-serif;
+            width: 760px;
+            }
+        </style>
+        
+    
+    <body>
+       
+        <div class="columns is-centered" style="padding-top: 200px;"> 
+        <div class="contentarea">
+            <div class="camera">
+              <video id="video">Video stream not available.</video>
+              <button id="startbutton">Take photo</button> 
+            </div>
+            <canvas id="canvas">
+            </canvas>
+
+            <!-- <canvas id="canvas2">
+            </canvas> -->
+
+            
+            <div class="output">
+              
+              
+                <img id="photo" name="photo" alt="The screen capture will appear in this box.">
+                <p id="classification" style="text-align: center; font-size: large; font-weight: bold;"></p>
+              
+            </div>
+          </div>
+        </div>
+
+
+    </body>
+
+    <!-- <script>
+        async function sendForm(event){
+            event.preventDefault();
+            const imgField = document.getElementById('photo');
+
+            const formData = new FormData();
+            formData.append('photo', imgField);
+            console.log(formData);
+
+            const response = await fetch("/api", {method: "POST", body: formData});
+            console.log(response);
+            const data = await response.json();
+            console.log(data);
+
+            
+
+        }
+    </script> -->
+
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+
+    <script>
+        (function() {
+// The width and height of the captured photo. We will set the
+// width to the value defined here, but the height will be
+// calculated based on the aspect ratio of the input stream.
+
+var width = 320;    // We will scale the photo width to this
+var height = 0;     // This will be computed based on the input stream
+
+// |streaming| indicates whether or not we're currently streaming
+// video from the camera. Obviously, we start at false.
+
+var streaming = false;
+
+// The various HTML elements we need to configure or control. These
+// will be set by the startup() function.
+
+var video = null;
+var canvas = null;
+var photo = null;
+var startbutton = null;
+var classification = null;
+
+function showViewLiveResultButton() {
+if (window.self !== window.top) {
+// Ensure that if our document is in a frame, we get the user
+// to first open it in its own tab or window. Otherwise, it
+// won't be able to request permission for camera access.
+document.querySelector(".contentarea").remove();
+const button = document.createElement("button");
+button.textContent = "View live result of the example code above";
+document.body.append(button);
+button.addEventListener('click', () => window.open(location.href));
+return true;
+}
+return false;
+}
+
+function startup() {
+if (showViewLiveResultButton()) { return; }
+video = document.getElementById('video');
+canvas = document.getElementById('canvas');
+// canvas2 = document.getElementById('canvas2');
+photo = document.getElementById('photo');
+startbutton = document.getElementById('startbutton');
+classification = document.getElementById('classification');
+
+navigator.mediaDevices.getUserMedia({video: true, audio: false})
+.then(function(stream) {
+video.srcObject = stream;
+video.play();
+})
+.catch(function(err) {
+console.log("An error occurred: " + err);
+});
+
+video.addEventListener('canplay', function(ev){
+if (!streaming) {
+    height = video.videoHeight / (video.videoWidth/width);
+
+    // Firefox currently has a bug where the height can't be read from
+    // the video, so we will make assumptions if this happens.
+
+    if (isNaN(height)) {
+    height = width / (4/3);
+    }
+
+    video.setAttribute('width', width);
+    video.setAttribute('height', height);
+    canvas.setAttribute('width', width);
+    canvas.setAttribute('height', height);
+    // canvas2.setAttribute('width', width);
+    // canvas2.setAttribute('height', height);
+    streaming = true;
+}
+}, false);
+
+startbutton.addEventListener('click', function(ev){
+takepicture();
+ev.preventDefault();
+}, false);
+
+clearphoto();
+}
+
+// Fill the photo with an indication that none has been
+// captured.
+
+function clearphoto() {
+var context = canvas.getContext('2d');
+context.fillStyle = "#AAA";
+context.fillRect(0, 0, canvas.width, canvas.height);
+
+// var context2 = canvas2.getContext('2d');
+// context2.fillStyle = "#AAA";
+// context2.fillRect(0, 0, canvas2.width, canvas2.height);
+
+var data = canvas.toDataURL('image/png');
+photo.setAttribute('src', data);
+//console.log(data);
+}
+
+// Capture a photo by fetching the current contents of the video
+// and drawing it into a canvas, then converting that to a PNG
+// format data URL. By drawing it on an offscreen canvas and then
+// drawing that to the screen, we can change its size and/or apply
+// other changes before drawing it.
+
+function takepicture() {
+var context = canvas.getContext('2d');
+if (width && height) {
+canvas.width = width;
+canvas.height = height;
+context.drawImage(video, 0, 0, width, height);
+var data = canvas.toDataURL('image/png');
+photo.setAttribute('src', data);
+
+async function cropImg(){
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+
+  
+  
+  
+  context.drawImage(video, 113.16184997558594, 90.25616455078125, width, height);
+  
+  faces = await detect_faces();
+
+  if (faces.length > 0){
+    for(let i = 0; i < faces.length; i++){
+      const face = faces[i];
+      const x = face.topLeft[0];
+      const y = face.topLeft[1];
+      const dwidth = face.bottomRight[0] - face.topLeft[0];
+      const dheight = face.bottomRight[1] - face.topLeft[1];
+      
+      console.log(x, y, dwidth, dheight);
+      //clearphoto();
+      context.drawImage(photo, x, y, width, height);
+    }
+    
+  }
+  else{
+    alert("No face detected");
+  }
+  
+}
+
+//cropImg();
+//context.drawImage(video, 0, 0, width, height);
+
+
+//console.log(data);
+
+// Teachable machine model
+
+async function detect_faces() {
+  // Load the model.
+  const model = await blazeface.load();
+
+  // Pass in an image or video to the model. The model returns an array of
+  // bounding boxes, probabilities, and landmarks, one for each detected face.
+
+  const returnTensors = false; // Pass in `true` to get tensors back, rather than values.
+  const predictions = await model.estimateFaces(photo, returnTensors);
+  return predictions;
+
+}
+
+async function init() {
+    // the link to your model provided by Teachable Machine export panel
+    const URL = "https://teachablemachine.withgoogle.com/models/19NQoHVKm/";
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+    // load the model and metadata
+    // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+    // or files from your local hard drive
+    // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+}
+
+async function predict() {
+    await init();
+    len_faces = await detect_faces();
+    if(len_faces.length > 0){
+        const prediction = await model.predict(photo);
+        console.log(prediction);
+        let maxKey, maxValue = 0;
+
+        for(let i = 0; i < maxPredictions; i++) {
+            value = prediction[i].probability;
+            if(value > maxValue) {
+                maxValue = value;
+                maxKey = prediction[i].className;
+            }
+        }
+        console.log(maxKey);
+        classification.textContent = maxKey + " : " + maxValue.toFixed(3);
+    }
+    else{
+        classification.textContent = "No face detected"
+        alert('No face detected');
+    }
+    
+}
+
+predict();
+
+
+
+} else {
+clearphoto();
+}
+}
+
+// Set up our event listener to run the startup process
+// once loading is complete.
+window.addEventListener('load', startup, false);
+})();
+</script>
+
+{% endblock %}

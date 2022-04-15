@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+    <body>
+        <div class="columns is-centered" style="padding-top: 200px;"> 
+        
+        {% if pred|length %}
+            {% for p,face in pred %}
+            <div class="column has-text-centered"> 
+                <figure>
+                    <img id="photo" src="static/{{ face }}" name="file">
+                    {% if p == "Correct"%}
+                    <figcaption class="has-text-primary">{{ p }}</figcaption>
+                    {% elif p == "Incorrect" %}
+                    <figcaption class="has-text-warning">{{ p }}</figcaption>
+                    {% else %}
+                    <figcaption class="has-text-danger">{{ p }}</figcaption>
+                    {% endif %}
+                    
+                </figure>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No face detected</p>
+        {% endif %}
+     
+        </div>
+        
+    </body>
+{% endblock %}
