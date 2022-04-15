@@ -59,7 +59,6 @@ uvicorn main:app --reload
 
 ## Lien vers l'application en ligne
 
-https://p7-projet4-app-service-groupe1.azurewebsites.net/
-
+https://maskdetector.azurewebsites.net/
 
 
