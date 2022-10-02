@@ -48,7 +48,7 @@ uvicorn main:app --reload
 
 **Classification sur les pages Take picture et Video** : tensorflow.js.
 
-## Lien vers l'application en ligne
+## Lien vers l'application en ligne (actuellement indisponible)
 
 https://maskdetector.azurewebsites.net/
 
