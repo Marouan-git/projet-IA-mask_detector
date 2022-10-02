@@ -1,12 +1,3 @@
-**Projet 4 - Groupe 1**
-
-> Cinthya (CdP), Marouan, Nolan
-
-
-**Table of contents**
-
-[TOC]
-
 ## Description de l'application
 
 The Mask-Arade est une application FastApi qui a pour but de détecter le port du masque sur les personnes présentes à Simplon Grenoble sur une image ou une vidéo.
